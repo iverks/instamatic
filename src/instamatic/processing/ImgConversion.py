@@ -7,7 +7,9 @@ from datetime import datetime
 from math import cos
 
 import numpy as np
+import yaml
 
+import instamatic
 from instamatic import config
 from instamatic.formats import read_tiff, write_adsc, write_mrc, write_tiff
 from instamatic.processing.flatfield import apply_flatfield_correction
@@ -91,7 +93,10 @@ def export_dials_variables(path, *, sequence=(), missing=(), rotation_xyz=None):
         print('::', file=f)
         print('::     dials.import directory=data %rotation_axis%', file=f)
         print('::     dials.find_spots datablock.json %scan_range%', file=f)
-        print('::     dials.integrate %exclude_images% refined.pickle refined.json', file=f)
+        print(
+            '::     dials.integrate %exclude_images% refined.pickle refined.json',
+            file=f,
+        )
 
 
 def get_calibrated_rotation_speed(val):
@@ -734,6 +739,26 @@ class ImgConversion:
                 angle = self.start_angle + sign * self.osc_angle * i
                 print(f'{tiff_path}/{fn} {angle:10.4f} 0.00', file=f)
             print('endimagelist', file=f)
+
+    def write_yaml_params(self, path: str) -> None:
+        def num(value, unit: str) -> dict:
+            """Adds a unit to the value to make the yaml-file more human-readable"""
+            return {'value': value, 'unit': unit}
+
+        with open(path / '3ded.yaml', 'w') as f:
+            yaml.dump(
+                {
+                    'instamatic_version': instamatic.__version__,
+                    'wavelength': num(self.wavelength, 'angstrom'),
+                    'start_angle': num(self.start_angle, 'degrees'),
+                    'end_angle': num(self.end_angle, 'degrees'),
+                    'osc_angle': num(self.osc_angle, 'degrees'),
+                    'rotation_axis': num(self.rotation_axis, 'degrees'),
+                    'pixelsize': num(self.pixelsize, '1/angstrom'),
+                    'physical_pixelsize': num(self.physical_pixelsize, 'mm'),
+                },
+                stream=f,
+            )
 
     def write_REDp_shiftcorrection(self, path: str) -> None:
         """Write .sc (shift correction) file for REDp in directory `path`"""

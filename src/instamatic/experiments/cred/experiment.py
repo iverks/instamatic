@@ -451,6 +451,8 @@ class Experiment(ExperimentBase):
         if self.write_pets:
             img_conv.write_pets_inp(self.path)
 
+        img_conv.write_yaml_params(self.path)
+
         img_conv.write_beam_centers(self.path)
 
     def write_image_data(self, buffer: list):
